@@ -94,6 +94,9 @@ while running:
         if event.type == pygame.QUIT:
             running = False
 
+    if pygame.key.get_pressed()[pygame.K_ESCAPE]:
+       running = False
+
     # render ship
     screen.blit(ship5.image, (ship5.x, ship5.y))
     screen.blit(ship3.image, (ship3.x, ship3.y))
