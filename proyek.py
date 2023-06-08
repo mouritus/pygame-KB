@@ -10,27 +10,34 @@ screen = pygame.display.set_mode((800, 600))
 pygame.display.set_caption("Battleship")
 
 # 0 map 1 img map hit 2 img ship hit 3 ship1 4 ship3 5 ship5
-square = [[0 for i in range(10)] for j in range(10)]
+squareMap = [[0 for i in range(10)] for j in range(10)]
+squareMapAI = [[0 for i in range(10)] for j in range(10)]
 
 # map draw
 squareImg = pygame.image.load('square.png')
 squareImgShipHit = pygame.image.load('square hit.png')
 squareImgMapHit = pygame.image.load('square map hit.png')
 
-square1X = 30
-square1Y = 30
+MAPFROMLEFT = 30
+MAPFROMUP = 30
 
 
 class Ship:
     rotate = 0
+    defaultX = 0
+    defaultY = 0
 
-    def __init__(self, x, y, width, height, imageName):
+    def __init__(self, x, y, width, height, imageName, identifier):
         self.x = x
         self.y = y
         self.width = width
         self.height = height
         self.image = pygame.image.load(imageName)
         self.imageName = imageName
+        self.defaultX = x
+        self.defaultY = y
+        self.identifier = identifier
+        self.inMap = False
 
     def rotateImg(self):
         if self.rotate == 0:
@@ -49,13 +56,16 @@ class Ship:
 
 
 # ships
-# ship1 = Ship(400, 300, 30, 30, 'ship1.png')
-# ship3 = Ship(500, 300, 30, 90, 'ship3.png')
-# ship5 = Ship(600, 300, 30, 150, 'ship5.png')
+sizeShip = 30
+SIZEMAP = sizeShip * 10
+ship1 = Ship(400, 300, 30, 30, 'ship1.png', 3)
+ship3 = Ship(500, 300, 30, 90, 'ship3.png', 4)
+ship5 = Ship(600, 300, 30, 150, 'ship5.png', 5)
+listShip = [ship1, ship3, ship5]
 
-ship1 = Ship(30, 30, 30, 30, 'ship1.png')
-ship3 = Ship(60, 30, 30, 90, 'ship3.png')
-ship5 = Ship(90, 30, 30, 150, 'ship5.png')
+# ship1 = Ship(30, 30, 30, 30, 'ship1.png', 1)
+# ship3 = Ship(60, 30, 30, 90, 'ship3.png', 3)
+# ship5 = Ship(90, 30, 30, 150, 'ship5.png', 5)
 
 
 # start
@@ -72,6 +82,7 @@ delayRotate = 0
 # Game Loop
 gameStart = False
 running = True
+playerTurn = True
 while running:
     delayRotate += 1
 
@@ -89,29 +100,28 @@ while running:
     screen.blit(ship1.image, (ship1.x, ship1.y))
 
     # render map
-    size = 30
+    square1Y = MAPFROMUP
+    square1X = MAPFROMLEFT
     for i in range(10):
         for j in range(10):
-            match square[i][j]:
-                case 0 | 3 | 4 | 5:
-                    screen.blit(squareImg, (square1X, square1Y))
-                    square1Y += size
+            if squareMap[i][j] == 0 or squareMap[i][j] >= 3:
+                screen.blit(squareImg, (square1X, square1Y))
+                square1Y += sizeShip
 
-                case 1:
-                    screen.blit(squareImgMapHit, (square1X, square1Y))
-                    square1Y += size
+            elif squareMap[i][j] == 1:
+                screen.blit(squareImgMapHit, (square1X, square1Y))
+                square1Y += sizeShip
 
-                case 2:
-                    screen.blit(squareImgShipHit, (square1X, square1Y))
-                    square1Y += size
+            elif squareMap[i][j] == 2:
+                screen.blit(squareImgShipHit, (square1X, square1Y))
+                square1Y += sizeShip
 
-        square1Y = size
-        square1X += size
-    square1Y = 30
-    square1X = 30
+        square1Y = MAPFROMUP
+        square1X += sizeShip
 
     if not gameStart:
-        screen.blit(start, (600, 200))
+        screen.blit(start, (660, 200))
+
         # drag and drop ship
         if pygame.mouse.get_pressed()[0]:
             mx, my = pygame.mouse.get_pos()
@@ -137,8 +147,12 @@ while running:
 
             elif ship5.x < mx < ship5.x + ship5.width and ship5.y < my < ship5.y + ship5.height:
                 dragDrop = 5
-        else:
+        else:  # correct placement if outside box
             dragDrop = 0
+            for ship in listShip:
+                if MAPFROMLEFT + SIZEMAP < ship.x + ship.width or ship.x < MAPFROMLEFT or MAPFROMUP + SIZEMAP < ship.y + ship.height or ship.y < MAPFROMUP:
+                    ship.x = ship.defaultX
+                    ship.y = ship.defaultY
 
         # rotate ship
         if pygame.key.get_pressed()[pygame.K_LCTRL] and pygame.mouse.get_pressed()[0] and delayRotate >= 100:
@@ -152,18 +166,18 @@ while running:
             dragDrop = 0
             delayRotate = 0
 
-        # autocorrect place ship
+        # autocorrect place ship and put into map
         if dragDrop == 0:
-            for ship in (ship1, ship3, ship5):
-                if 330 > ship.x and ship.x + ship.width > 30 and 330 > ship.y and ship.y + ship.height > 30:
-                    temp = ship.x + (size / 2) - 30
+            for ship in listShip:
+                if MAPFROMLEFT + SIZEMAP > ship.x and ship.x + ship.width > MAPFROMLEFT and MAPFROMUP + SIZEMAP > ship.y and ship.y + ship.height > MAPFROMUP:
+                    temp = ship.x + (sizeShip / 2) - 30
                     hasilx = 0
                     hasily = 0
                     while temp > 30:
                         temp -= 30
                         hasilx += 1
 
-                    temp = ship.y + (size / 2) - 30
+                    temp = ship.y + (sizeShip / 2) - 30
                     while temp > 30:
                         temp -= 30
                         hasily += 1
@@ -171,11 +185,26 @@ while running:
                     ship.x = (hasilx * 30) + 30
                     ship.y = (hasily * 30) + 30
 
+                    # tempX = 0
+                    # tempY = 0
+                    # if ship.inMap:
+                    #     tempX = ship.x - MAPFROMLEFT
+                    #     tempY = ship.y - MAPFROMUP
+                    #     for i in range(tempY, tempY + int(ship.height / 30)):
+                    #         for j in range(tempX, tempX + int(ship.width / 30)):
+                    #             squareMap[i][j] = 0
+
+                    # for i in range(hasily, hasily + int(ship.height / 30)):
+                    #     for j in range(hasilx, hasilx + int(ship.width / 30)):
+                    #         squareMap[i][j] = ship.identifier
+
+                    # ship.inMap = True
+
         # press start
-        if 600 < pygame.mouse.get_pos()[0] < 700 and 200 < pygame.mouse.get_pos()[1] < 230 and pygame.mouse.get_pressed()[0]:
-            square[int((ship1.x - 30) / 30)][int((ship1.y - 30) / 30)] = 3
-            iter = 0
-            for ship in (ship3, ship5):
+        if 600 < pygame.mouse.get_pos()[0] < 700 and 200 < pygame.mouse.get_pos()[1] < 230 and \
+                pygame.mouse.get_pressed()[0]:
+            gameStart = True
+            for ship in listShip:
                 temp = ship.x - 30
                 hasilx = 0
                 hasily = 0
@@ -183,41 +212,90 @@ while running:
                     temp -= 30
                     hasilx += 1
 
-                temp = ship.y + (size / 2) - 30
+                temp = ship.y + (sizeShip / 2) - 30
                 while temp >= 30:
                     temp -= 30
                     hasily += 1
 
                 for i in range(hasily, hasily + int(ship.height / 30)):
                     for j in range(hasilx, hasilx + int(ship.width / 30)):
-                        square[i][j] = iter + 4
-                iter += 1
-                print(hasilx, int(ship.width / 30))
+                        squareMap[i][j] = ship.identifier
             gameStart = True
 
             for i in range(10):
-                print(square[i])
+                print(squareMap[i])
 
     # game start ------------------------------------------------------------------------------------------------------
     else:
-        screen.blit(startPending, (600, 200))
-        # map hit
-        if pygame.mouse.get_pressed()[0]:
+        screen.blit(startPending, (660, 200))
+
+        # draw map AI
+        squareAI1Y = 30
+        squareAI1X = MAPFROMLEFT + SIZEMAP + 20
+        for i in range(10):
+            for j in range(10):
+                if squareMapAI[i][j] == 0 or squareMap[i][j] >= 3:
+                    screen.blit(squareImg, (squareAI1X, squareAI1Y))
+                    squareAI1Y += sizeShip
+
+                elif squareMapAI[i][j] == 1:
+                    screen.blit(squareImgMapHit, (squareAI1X, squareAI1Y))
+                    squareAI1Y += sizeShip
+
+                elif squareMapAI[i][j] == 2:
+                    screen.blit(squareImgShipHit, (squareAI1X, squareAI1Y))
+                    squareAI1Y += sizeShip
+
+            squareAI1Y = MAPFROMUP
+            squareAI1X += sizeShip
+
+        squareAI1X = MAPFROMLEFT + SIZEMAP + 20
+
+        # map player hit
+        if pygame.mouse.get_pressed()[0] and not playerTurn:
             mx, my = pygame.mouse.get_pos()
-            mx -= 30
-            my -= 30
-            if 300 > mx > 0 and 300 > my > 0:
-                hasilx = 0
-                hasily = 0
-                while mx > 30:
+            if MAPFROMLEFT + SIZEMAP > mx > MAPFROMLEFT and MAPFROMUP + SIZEMAP > my > MAPFROMUP:
+                hasilx = -1
+                hasily = -1
+                while mx > MAPFROMLEFT:
                     mx -= 30
                     hasilx += 1
 
-                while my > 30:
+                while my > MAPFROMUP:
                     my -= 30
                     hasily += 1
 
-                square[hasilx][hasily] = 1
+                if squareMap[hasilx][hasily] == 0:
+                    squareMap[hasilx][hasily] = 1
+                    playerTurn = True
+                elif squareMap[hasilx][hasily] >= 3:
+                    squareMap[hasilx][hasily] = 2
+                    playerTurn = True
+
+
+
+        # map AI hit
+        if pygame.mouse.get_pressed()[0] and playerTurn:
+            mx, my = pygame.mouse.get_pos()
+            if squareAI1X + SIZEMAP > mx > squareAI1X and MAPFROMUP + SIZEMAP > my > MAPFROMUP:
+                hasilx = -1
+                hasily = -1
+                while mx > squareAI1X:
+                    mx -= 30
+                    hasilx += 1
+
+                while my > MAPFROMUP:
+                    my -= 30
+                    hasily += 1
+
+                if squareMapAI[hasilx][hasily] == 0:
+                    squareMapAI[hasilx][hasily] = 1
+                    playerTurn = False
+                elif squareMapAI[hasilx][hasily] >= 3:
+                    squareMapAI[hasilx][hasily] = 2
+                    playerTurn = False
+
+
 
         # # Collision
         # collision = isCollision(enemyX[i], enemyY[i], bulletX, bulletY)
