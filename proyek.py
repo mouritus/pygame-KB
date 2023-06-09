@@ -177,7 +177,17 @@ while running:
             mx, my = pygame.mouse.get_pos()
             for ship in listShip:
                 if ship.x < mx < ship.x + ship.width and ship.y < my < ship.y + ship.height:
+                    shipHeight = int(ship.height / 30)
+                    shipWidth = int(ship.width / 30)
+
                     ship.rotateImg()
+                    if ship.inMap:
+                        for i in range(int(ship.yMap / 30) - 1, int(ship.yMap / 30) + shipHeight):
+                            for j in range(int(ship.xMap / 30) - 1, int(ship.xMap / 30) + shipWidth):
+                                squareMap[i][j] = 0
+                    #
+                    #     for i in range(int(ship.yMap / 30), int(ship.yMap / 30) + ship.height):
+                    #         for j in range(int(ship.xMap / 30), int(ship.xMap / 30) + ship.width):
 
             dragDrop = 0
             delayRotate = 0
