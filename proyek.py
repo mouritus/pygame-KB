@@ -249,7 +249,7 @@ while running:
 
 
         # press start
-        if 600 < pygame.mouse.get_pos()[0] < 700 and 200 < pygame.mouse.get_pos()[1] < 230 and \
+        if 660 < pygame.mouse.get_pos()[0] < 760 and 200 < pygame.mouse.get_pos()[1] < 230 and \
                 pygame.mouse.get_pressed()[0]:
             gameStart = True
             # for ship in listShip:
